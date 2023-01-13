@@ -26,11 +26,11 @@ type State struct {
 	open        bool   `json:open`
 }
 
-var addr = flag.String("addr", "192.168.0.133:443", "http service address")
-
 func main() {
 
 	godotenv.Load(".env")
+	var addressString = fmt.Sprintf("%s:%s", os.Getenv("IP_ADDRESS"), os.Getenv("PORT"))
+	var addr = flag.String("addr", addressString, "http service address")
 	var gotifyPath = fmt.Sprintf("https://gotify.azaurus.dev/message?token=%s", os.Getenv("GOTIFY_API_KEY"))
 	flag.Parse()
 	log.SetFlags(0)
@@ -61,7 +61,7 @@ func main() {
 			if strings.Contains(s, "\"open\":true") {
 				fmt.Println("Door Open detected")
 				postData := url.Values{
-					"title":    {"Door opened - websocket"},
+					"title":    {"Door opened"},
 					"message":  {"The front door is open"},
 					"priority": {"5"},
 				}
