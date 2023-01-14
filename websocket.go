@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -60,29 +61,53 @@ func main() {
 			s := string(message)
 			if strings.Contains(s, "\"open\":true") {
 				fmt.Println("Door Open detected")
-				postData := url.Values{
-					"title":    {"Door opened"},
-					"message":  {"The front door is open"},
-					"priority": {"5"},
-				}
-				resp, err := http.PostForm(gotifyPath, postData)
+
+				response, err := http.Get("http://127.0.0.1:8111/alarm_state")
 				if err != nil {
 					log.Fatal(err)
 				}
-				fmt.Println(resp)
-			} else if strings.Contains(s, "\"vibration\":true") {
-				fmt.Println("Vibration detected")
-				postData := url.Values{
-					"title":    {"Vibration detected- websocket"},
-					"message":  {"There is vibration at the front door"},
-					"priority": {"5"},
+				bodyBytes, err := ioutil.ReadAll(response.Body)
+				body := string(bodyBytes)
+
+				if body == "OFF" {
+					postData := url.Values{
+						"title":    {"Door opened"},
+						"message":  {"The front door is open"},
+						"priority": {"5"},
+					}
+					resp, err := http.PostForm(gotifyPath, postData)
+					if err != nil {
+						log.Fatal(err)
+					}
+					fmt.Println(body)
+					fmt.Println(resp)
+				} else if body == "ON" {
+					postData := url.Values{
+						"title":    {"ALARM - Door opened"},
+						"message":  {"The front door is open"},
+						"priority": {"10"},
+					}
+					resp, err := http.PostForm(gotifyPath, postData)
+					if err != nil {
+						log.Fatal(err)
+					}
+					fmt.Println(body)
+					fmt.Println(resp)
 				}
-				resp, err := http.PostForm(gotifyPath, postData)
-				if err != nil {
-					log.Fatal(err)
-				}
-				fmt.Println(resp)
-			}
+
+			} //else if strings.Contains(s, "\"vibration\":true") {
+			//	fmt.Println("Vibration detected")
+			//	postData := url.Values{
+			//		"title":    {"Vibration detected- websocket"},
+			//		"message":  {"There is vibration at the front door"},
+			//		"priority": {"5"},
+			//	}
+			//	resp, err := http.PostForm(gotifyPath, postData)
+			//	if err != nil {
+			//		log.Fatal(err)
+			//	}
+			//	fmt.Println(resp)
+			//}
 			//log.Printf("recv: %s", message)
 		}
 	}()
